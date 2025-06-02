@@ -1,0 +1,16 @@
+services:
+  mysql:
+    image: mysql
+    container_name: mysql-container
+    environment:
+      MYSQL_USER: surya
+      MYSQL_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: snippetbox
+    ports:
+      - 3306:3306
+    volumes:
+      - mysqldb:/var/lib/mysql
+
+volumes:
+  mysqldb:

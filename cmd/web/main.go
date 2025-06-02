@@ -1,17 +1,55 @@
 package main
 
 import (
-	"log"
+	"database/sql"
+	"flag"
+	"log/slog"
 	"net/http"
+	"os"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
-func main() {
-	mux := http.NewServeMux()
-	mux.HandleFunc("GET /{$}", home)
-	mux.HandleFunc("GET /snippet/view/{id}", snippetView)
-	mux.HandleFunc("GET /snippet/create", snippetCreate)
-	mux.HandleFunc("POST /snippet/create", snippetCreatePost)
+type application struct {
+	logger *slog.Logger
+}
 
-	log.Println("starting server on:4000")
-	log.Fatal(http.ListenAndServe(":4000", mux))
+func main() {
+	addr := flag.String("addr", ":4000", "HTTP network adress")
+	dsn := flag.String("dsn", "surya:password@/snippetbox?parseTime=true", "MySQL data source name")
+	flag.Parse()
+
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+
+	logger.Info("starting server", slog.String("addr", *addr))
+
+	db, err := openDB(*dsn)
+	if err != nil {
+		logger.Error(err.Error())
+		os.Exit(1)
+	}
+	defer db.Close()
+
+	app := application{
+		logger: logger,
+	}
+
+	err = http.ListenAndServe(*addr, app.routes())
+	logger.Error(err.Error())
+	os.Exit(1)
+}
+
+func openDB(dsn string) (*sql.DB, error) {
+	db, err := sql.Open("mysql", dsn)
+	if err != nil {
+		return nil, err
+	}
+
+	err = db.Ping()
+	if err != nil {
+		db.Close()
+		return nil, err
+	}
+
+	return db, nil
 }
