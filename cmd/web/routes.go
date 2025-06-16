@@ -8,10 +8,12 @@ func (app *application) routes() http.Handler {
 	fileServer := http.FileServer(http.Dir("./ui/static/"))
 	mux.Handle("GET /static/", http.StripPrefix("/static", fileServer))
 
-	mux.HandleFunc("GET /{$}", app.home)
-	mux.HandleFunc("GET /snippet/view/{id}", app.snippetView)
-	mux.HandleFunc("GET /snippet/create", app.snippetCreate)
-	mux.HandleFunc("POST /snippet/create", app.snippetCreatePost)
+	mux.Handle("GET /{$}", app.sessionManager.LoadAndSave(http.HandlerFunc(app.home)))
+	dynamicMux := http.NewServeMux()
+	dynamicMux.HandleFunc("GET /snippet/view/{id}", app.snippetView)
+	dynamicMux.HandleFunc("GET /snippet/create", app.snippetCreate)
+	dynamicMux.HandleFunc("POST /snippet/create", app.snippetCreatePost)
+	mux.Handle("/snippet/", app.sessionManager.LoadAndSave(dynamicMux))
 
 	mux.HandleFunc("GET /user/signup", app.userSignup)
 	mux.HandleFunc("POST /user/signup", app.userSignupPost)
