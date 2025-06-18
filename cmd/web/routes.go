@@ -9,6 +9,7 @@ import (
 func (app *application) routes() http.Handler {
 	dMux := http.NewServeMux()
 	dMux.HandleFunc("GET /{$}", app.home)
+	dMux.HandleFunc("GET /snippet/view/", app.snippetView)
 	dMux.HandleFunc("GET /snippet/view/{id}", app.snippetView)
 	dMux.HandleFunc("GET /user/signup", app.userSignup)
 	dMux.HandleFunc("POST /user/signup", app.userSignupPost)
@@ -22,8 +23,10 @@ func (app *application) routes() http.Handler {
 
 	mux := http.NewServeMux()
 	mux.Handle("GET /static/", http.FileServerFS(ui.Files))
-	mux.Handle("/", app.sessionManager.LoadAndSave(app.authenticate(dMux)))
+	mux.Handle("/", noSurf(app.sessionManager.LoadAndSave(app.authenticate(dMux))))
 	dMux.Handle("/", app.requireAuthentication(pdMux))
+
+	mux.HandleFunc("GET /ping", ping)
 
 	return app.recoverPanic(app.logRequest(commonHeaders(mux)))
 }

@@ -24,7 +24,7 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 
 func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(r.PathValue("id"))
-	if err != nil || id < 0 {
+	if err != nil || id <= 0 {
 		http.NotFound(w, r)
 		return
 	}
@@ -205,7 +205,7 @@ func (app *application) userLoginPost(w http.ResponseWriter, r *http.Request) {
 
 	id, err := app.users.Authenticate(form.Email, form.Password)
 	if err != nil {
-		if errors.Is(err, models.ErrInvalidCredential) {
+		if errors.Is(err, models.ErrInvalidCredentials) {
 			form.AddNonFieldError("Email or password is incorrect")
 
 			data := app.newTemplateData(r)
@@ -237,4 +237,8 @@ func (app *application) userLogout(w http.ResponseWriter, r *http.Request) {
 	app.sessionManager.Put(r.Context(), "flash", "You've been logged out successfully!")
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+func ping(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("OK"))
 }

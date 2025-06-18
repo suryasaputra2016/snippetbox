@@ -10,6 +10,12 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+type UserModelInterface interface {
+	Insert(name, email, password string) error
+	Authenticate(email, password string) (int, error)
+	Exists(id int) (bool, error)
+}
+
 type User struct {
 	ID             int
 	Name           string
@@ -53,7 +59,7 @@ func (m *UserModel) Authenticate(email, password string) (int, error) {
 	err := m.DB.QueryRow(stmt, email).Scan(&id, &hashedPasword)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return 0, ErrInvalidCredential
+			return 0, ErrInvalidCredentials
 		} else {
 			return 0, err
 		}
@@ -62,7 +68,7 @@ func (m *UserModel) Authenticate(email, password string) (int, error) {
 	err = bcrypt.CompareHashAndPassword(hashedPasword, []byte(password))
 	if err != nil {
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
-			return 0, ErrInvalidCredential
+			return 0, ErrInvalidCredentials
 		} else {
 			return 0, err
 		}
